@@ -1,2 +1,2 @@
 Some powershell scripts.
-Excuse the mild syntax inconsistencies.  I previously worked with bash and JS and was writing these pretty quickly. PowerShell's naming conventions aren't obvious at a glance, either.
+Excuse the syntax inconsistencies.  I've most recently worked with bash and JS, and was writing these quickly.
