@@ -10,6 +10,12 @@ if (-not $FILE_PATH) {
 # Possible TODO: keep these scoped
 $dbConnLookup = @{}
 $dbConnList = New-Object System.Collections.Generic.List[System.Object]
+$Namespace = @{
+  DTS = "www.microsoft.com/SqlServer/Dts"
+}
+
+$TestXml = Select-Xml -Path $FILE_PATH -Namespace $Namespace -XPath "/DTS:Executable/DTS:Property"
+echo $TestXml.Node
 
 # Currently using piped for loops for the convenience of oneliners,
 # move to real loops if these scripts get more complicated
@@ -44,9 +50,15 @@ function GetConnStrAsHashByDTSID {
   $xmlContent.Executable.ConnectionManagers.ConnectionManager |
     ForEach-Object {
       $temp_DbConnStr = New-Object System.Data.Common.DbConnectionStringBuilder
-      $temp_DbConnStr.set_ConnectionString(
-        $_.ObjectData.ConnectionManager.ConnectionString
-      )
+      try {
+        $temp_DbConnStr.set_ConnectionString(
+          $_.ObjectData.ConnectionManager.ConnectionString
+        )
+      } catch {
+        echo "Connection string could not be converted into a database connection string. Printing raw string:"
+        echo "$_.ObjectData.ConnectionManager.ConnectionString"
+        return;
+      }
       # var in case change for something else
       $lookupId = $_.DTSID
 
@@ -64,11 +76,39 @@ function GetConnStrAsHashByDTSID {
   return $dbConnLookup
 }
 
+# === Table parser ===
+
+# pseudo code
+# Executable.ObjectData.pipeline.components | forEach component
+# properties | foreach Property
+# if name === "OpenRowset"
+  # return embedded element
+
+
+function GetTablesByConnection {
+  # $Connections = GetConnStrAsHashByDTSID;
+  # $Connections |
+  #   ForEach-Object {
+  #     echo "===="
+  #     $_
+  #   } 
+
+  # $xmlContent.Load()
+  # echo $xmlContent.SelectNodes("/Executable", Nam);
+  # echo $xmlContent.SelectNodes("//SQLTask:SqlTaskData");
+  # echo $xmlContent.SelectNodes("//SqlTaskData[@Connection='{C7520A9D-14A9-4EB1-9764-6F60CDE13EE8}']");
+
+  # $Tables = @{};
+  # $Connections
+
+}
+
 # (temp comment-uncomment section)
 # ==== Function Calls ====
 #PrintAllConnStr
-#GetConnStrAsObjList
-GetConnStrAsHashByDTSID
+# GetConnStrAsObjList
+# GetConnStrAsHashByDTSID | ConvertTo-Json
+GetTablesByConnection
 
 ## Parsing examples
 #$(GetConnStrAsHashByDTSID)["{DEA-DBEEF-456}"]
