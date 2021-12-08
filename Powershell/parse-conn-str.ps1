@@ -12,9 +12,11 @@ $dbConnLookup = @{}
 $dbConnList = New-Object System.Collections.Generic.List[System.Object]
 $Namespace = @{
   DTS = "www.microsoft.com/SqlServer/Dts"
+  SQLTask = "www.microsoft.com/sqlserver/dts/tasks/sqltask"
 }
 
-$TestXml = Select-Xml -Path $FILE_PATH -Namespace $Namespace -XPath "/DTS:Executable/DTS:Property"
+  # echo $xmlContent.SelectNodes("//SQLTask:SqlTaskData");
+$TestXml = Select-Xml -Path $FILE_PATH -Namespace $Namespace -XPath "//SQLTask:SqlTaskData"
 echo $TestXml.Node
 
 # Currently using piped for loops for the convenience of oneliners,
