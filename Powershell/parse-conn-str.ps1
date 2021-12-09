@@ -10,14 +10,7 @@ if (-not $FILE_PATH) {
 # Possible TODO: keep these scoped
 $dbConnLookup = @{}
 $dbConnList = New-Object System.Collections.Generic.List[System.Object]
-$Namespace = @{
-  DTS = "www.microsoft.com/SqlServer/Dts"
-  SQLTask = "www.microsoft.com/sqlserver/dts/tasks/sqltask"
-}
 
-  # echo $xmlContent.SelectNodes("//SQLTask:SqlTaskData");
-$TestXml = Select-Xml -Path $FILE_PATH -Namespace $Namespace -XPath "//SQLTask:SqlTaskData"
-echo $TestXml.Node
 
 # Currently using piped for loops for the convenience of oneliners,
 # move to real loops if these scripts get more complicated
@@ -48,7 +41,7 @@ function GetConnStrAsObjList {
 }
 
 # Store connection strings in a hash table using DTSID as lookup key
-function GetConnStrAsHashByDTSID {
+function GetConnStrAsHash {
   $xmlContent.Executable.ConnectionManagers.ConnectionManager |
     ForEach-Object {
       $temp_DbConnStr = New-Object System.Data.Common.DbConnectionStringBuilder
@@ -86,31 +79,36 @@ function GetConnStrAsHashByDTSID {
 # if name === "OpenRowset"
   # return embedded element
 
+function GetSqlQueries {
+  $Namespace = @{
+    DTS = "www.microsoft.com/SqlServer/Dts"
+    SQLTask = "www.microsoft.com/sqlserver/dts/tasks/sqltask"
+  }
 
-function GetTablesByConnection {
-  # $Connections = GetConnStrAsHashByDTSID;
-  # $Connections |
-  #   ForEach-Object {
-  #     echo "===="
-  #     $_
-  #   } 
+  return $(
+    Select-Xml -Path $FILE_PATH -Namespace $Namespace -XPath "//SQLTask:SqlTaskData"
+  ).Node
+}
+function GetSqlQueriesByConnId {
+  $queries = New-Object System.Collections.Generic.List[System.Object]
+  $connectionId = '{B4D95B53-7D7E-40C0-BDE4-735C16D4AEDE}'
+  GetSqlQueries |
+    ForEach-Object {
+      if ($_.Connection -eq $connectionId) {
+        $queries.Add($_.SqlStatementSource);
+      }
+    }
+  return $queries
 
-  # $xmlContent.Load()
-  # echo $xmlContent.SelectNodes("/Executable", Nam);
-  # echo $xmlContent.SelectNodes("//SQLTask:SqlTaskData");
   # echo $xmlContent.SelectNodes("//SqlTaskData[@Connection='{C7520A9D-14A9-4EB1-9764-6F60CDE13EE8}']");
-
-  # $Tables = @{};
-  # $Connections
-
 }
 
 # (temp comment-uncomment section)
 # ==== Function Calls ====
 #PrintAllConnStr
 # GetConnStrAsObjList
-# GetConnStrAsHashByDTSID | ConvertTo-Json
-GetTablesByConnection
+# GetConnStrAsHash | ConvertTo-Json
+GetSqlQueriesByConnId
 
 ## Parsing examples
-#$(GetConnStrAsHashByDTSID)["{DEA-DBEEF-456}"]
+#$(GetConnStrAsHash)["{DEA-DBEEF-456}"]
