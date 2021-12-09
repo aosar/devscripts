@@ -45,17 +45,19 @@ function GetConnStrAsHash {
   $xmlContent.Executable.ConnectionManagers.ConnectionManager |
     ForEach-Object {
       $temp_DbConnStr = New-Object System.Data.Common.DbConnectionStringBuilder
+      $connStrDataOriginal = $_.ObjectData.ConnectionManager.ConnectionString
+      $lookupId = $_.DTSID
       try {
+        # Note: this function mutates "this" ($_). If unsuccessful it sets it to an error (yay Powershell)
         $temp_DbConnStr.set_ConnectionString(
-          $_.ObjectData.ConnectionManager.ConnectionString
+          $connStrDataOriginal
         )
       } catch {
-        echo "Connection string could not be converted into a database connection string. Printing raw string:"
-        echo "$_.ObjectData.ConnectionManager.ConnectionString"
-        return;
+        ## silence warning
+        ## echo "[Warning] Connection string could not be converted into a database connection object. Using raw string."
+
+        $temp_DbConnStr = $connStrDataOriginal
       }
-      # var in case change for something else
-      $lookupId = $_.DTSID
 
       # Validate object doesnt already exist in hash table
       if (!!$dbConnLookup[$lookupId]) {
@@ -79,8 +81,6 @@ function GetConnStrAsHash {
 # if name === "OpenRowset"
   # return embedded element
 
-# Defaults to get enabled sql queries
-# Usage: pass single-dash flag of param name (ex: `GetSqlQueries -GetAll`)
 function GetSqlQueries {
   param (
     [switch]$AreDisabled,
@@ -106,7 +106,6 @@ function GetSqlQueries {
     Select-Xml -Path $FILE_PATH -Namespace $Namespace -XPath $SqlQueryXPath
   ).Node
 }
-
 function GetSqlQueriesByConnId {
   param (
     [string]$connectionId
@@ -135,3 +134,17 @@ GetSqlQueries
 
 ## Parsing examples
 #$(GetConnStrAsHash)["{DEA-DBEEF-456}"]
+
+# "View"
+<#
+$ConnHash = GetConnStrAsHash
+$ConnView = @{}
+$ConnHash.keys | ForEach-Object {
+   #echo GetSqlQueriesByConnId("`"${_}`"")
+   echo $(GetSqlQueriesByConnId("${_}"))
+  
+  #$ConnView[$ConnHash["${_}"]] = GetSqlQueriesByConnId($_)
+  #$ConnHash["${_}"]['SqlQueries'] = GetSqlQueriesByConnId($_)
+}
+#$ConnView
+#>
