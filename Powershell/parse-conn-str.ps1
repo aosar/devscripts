@@ -90,8 +90,11 @@ function GetSqlQueries {
   ).Node
 }
 function GetSqlQueriesByConnId {
+  param (
+    [string]$connectionId
+  )
   $queries = New-Object System.Collections.Generic.List[System.Object]
-  $connectionId = '{B4D95B53-7D7E-40C0-BDE4-735C16D4AEDE}'
+
   GetSqlQueries |
     ForEach-Object {
       if ($_.Connection -eq $connectionId) {
@@ -99,8 +102,6 @@ function GetSqlQueriesByConnId {
       }
     }
   return $queries
-
-  # echo $xmlContent.SelectNodes("//SqlTaskData[@Connection='{C7520A9D-14A9-4EB1-9764-6F60CDE13EE8}']");
 }
 
 # (temp comment-uncomment section)
@@ -108,7 +109,11 @@ function GetSqlQueriesByConnId {
 #PrintAllConnStr
 # GetConnStrAsObjList
 # GetConnStrAsHash | ConvertTo-Json
-GetSqlQueriesByConnId
+# $(GetConnStrAsHash).keys | ForEach-Object {
+#   $_.SqlQueries = GetSqlQueriesByConnId($_)
+# }
+# GetSqlQueriesByConnId '{B4D95B53-7D7E-40C0-BDE4-735C16D4AEDE}'
+GetSqlQueries
 
 ## Parsing examples
 #$(GetConnStrAsHash)["{DEA-DBEEF-456}"]
