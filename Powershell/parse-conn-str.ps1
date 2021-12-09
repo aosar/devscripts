@@ -79,14 +79,27 @@ function GetConnStrAsHash {
 # if name === "OpenRowset"
   # return embedded element
 
+# Defaults to get enabled sql queries
 function GetSqlQueries {
   $Namespace = @{
     DTS = "www.microsoft.com/SqlServer/Dts"
     SQLTask = "www.microsoft.com/sqlserver/dts/tasks/sqltask"
   }
+   $areDisabled = 'False' # Default to false
+  
+  $SqlQueryXPath = '//SQLTask:SqlTaskData'
 
+  # TODO: more efficient templating
+  if (!$getAll) {
+    if ($areDisabled -eq 'True') {
+      $SqlQueryXPath = "//DTS:Executable[@DTS:Disabled=`"${areDisabled}`"]/DTS:ObjectData/SQLTask:SqlTaskData"
+    } else { # implicit areDisabled="False", modify if changing default from False
+      # consider missing prop not disabled
+      $SqlQueryXPath = "(//DTS:Executable[@DTS:Disabled=`"${areDisabled}`"]|//DTS:Executable[not(@DTS:Disabled)])/DTS:ObjectData/SQLTask:SqlTaskData"
+    }
+  }
   return $(
-    Select-Xml -Path $FILE_PATH -Namespace $Namespace -XPath "//SQLTask:SqlTaskData"
+    Select-Xml -Path $FILE_PATH -Namespace $Namespace -XPath $SqlQueryXPath
   ).Node
 }
 function GetSqlQueriesByConnId {
@@ -113,7 +126,7 @@ function GetSqlQueriesByConnId {
 #   $_.SqlQueries = GetSqlQueriesByConnId($_)
 # }
 # GetSqlQueriesByConnId '{B4D95B53-7D7E-40C0-BDE4-735C16D4AEDE}'
-GetSqlQueries
+$(GetSqlQueries)
 
 ## Parsing examples
 #$(GetConnStrAsHash)["{DEA-DBEEF-456}"]
