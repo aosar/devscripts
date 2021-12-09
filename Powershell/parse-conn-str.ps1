@@ -80,28 +80,33 @@ function GetConnStrAsHash {
   # return embedded element
 
 # Defaults to get enabled sql queries
+# Usage: pass single-dash flag of param name (ex: `GetSqlQueries -GetAll`)
 function GetSqlQueries {
+  param (
+    [switch]$AreDisabled,
+    [switch]$GetAll
+  )
   $Namespace = @{
     DTS = "www.microsoft.com/SqlServer/Dts"
     SQLTask = "www.microsoft.com/sqlserver/dts/tasks/sqltask"
   }
-   $areDisabled = 'False' # Default to false
   
   $SqlQueryXPath = '//SQLTask:SqlTaskData'
 
   # TODO: more efficient templating
-  if (!$getAll) {
-    if ($areDisabled -eq 'True') {
-      $SqlQueryXPath = "//DTS:Executable[@DTS:Disabled=`"${areDisabled}`"]/DTS:ObjectData/SQLTask:SqlTaskData"
+  if (!$GetAll) {
+    if ($AreDisabled) {
+      $SqlQueryXPath = "//DTS:Executable[@DTS:Disabled=`"True`"]/DTS:ObjectData/SQLTask:SqlTaskData"
     } else { # implicit areDisabled="False", modify if changing default from False
       # consider missing prop not disabled
-      $SqlQueryXPath = "(//DTS:Executable[@DTS:Disabled=`"${areDisabled}`"]|//DTS:Executable[not(@DTS:Disabled)])/DTS:ObjectData/SQLTask:SqlTaskData"
+      $SqlQueryXPath = "(//DTS:Executable[@DTS:Disabled=`"False`"]|//DTS:Executable[not(@DTS:Disabled)])/DTS:ObjectData/SQLTask:SqlTaskData"
     }
   }
   return $(
     Select-Xml -Path $FILE_PATH -Namespace $Namespace -XPath $SqlQueryXPath
   ).Node
 }
+
 function GetSqlQueriesByConnId {
   param (
     [string]$connectionId
@@ -126,7 +131,7 @@ function GetSqlQueriesByConnId {
 #   $_.SqlQueries = GetSqlQueriesByConnId($_)
 # }
 # GetSqlQueriesByConnId '{B4D95B53-7D7E-40C0-BDE4-735C16D4AEDE}'
-$(GetSqlQueries)
+GetSqlQueries
 
 ## Parsing examples
 #$(GetConnStrAsHash)["{DEA-DBEEF-456}"]
