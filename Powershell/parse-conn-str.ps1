@@ -1,5 +1,8 @@
 $FILE_PATH=$Args[0]
 
+$CALL=$Args[1]
+$PASSTHRU=$Args[2]
+
 if (-not $FILE_PATH) {
   echo "Missing parameter FILE_PATH `n"
   exit 1
@@ -21,8 +24,13 @@ function PrintAllConnStr {
   echo "`n"
   $xmlContent.Executable.ConnectionManagers.ConnectionManager |
     ForEach-Object {
-      echo "=============================="
-      echo $_.ObjectData.ConnectionManager.ConnectionString
+      #echo "=============================="
+      # todo rename var. call is just arg for data output
+      if ($CALL -eq "name") {
+        echo $_.ObjectName
+      } else {
+        echo $_.ObjectData.ConnectionManager.ConnectionString
+      }
     }
   echo "`n"
 }
@@ -121,22 +129,55 @@ function GetSqlQueriesByConnId {
   return $queries
 }
 
+function PrintAllVar {
+  echo "`n"
+  $xmlContent.Executable.Variables.Variable |
+    ForEach-Object {
+    #echo $_
+      #echo "=============================="
+      # todo rename var
+      if ($PASSTHRU -eq "name") {
+        echo $_.ObjectName
+      } else {
+        if ($_.EvaluateAsExpression) {
+          echo $_.Expression
+        } else {
+          echo $_.VariableValue.InnerText
+        }
+      }
+    }
+  echo "`n"
+}
+
 # (temp comment-uncomment section)
 # ==== Function Calls ====
 #PrintAllConnStr
 # GetConnStrAsObjList
-# GetConnStrAsHash | ConvertTo-Json
-# $(GetConnStrAsHash).keys | ForEach-Object {
-#   $_.SqlQueries = GetSqlQueriesByConnId($_)
-# }
-# GetSqlQueriesByConnId '{B4D95B53-7D7E-40C0-BDE4-735C16D4AEDE}'
-GetSqlQueries
+# echo " === Connection String Lookup =="
+if ($CALL -eq "conn") {
+  GetConnStrAsHash | ConvertTo-Json
+}
+#GetConnStrAsHash 
+#| ForEach-Object {
+#  echo $_.Name
+#  $_.Value | ConvertTo-JSON
+#}
+
+
+if ($CALL -eq "sql") {
+  if(-not $PASSTHRU) {
+    echo "[debug] no arg"
+    GetSqlQueries
+  } else {
+    GetSqlQueriesByConnId $PASSTHRU | ConvertTo-Json
+  }
+}
 
 ## Parsing examples
 #$(GetConnStrAsHash)["{DEA-DBEEF-456}"]
 
-# "View"
 <#
+# "View"
 $ConnHash = GetConnStrAsHash
 $ConnView = @{}
 $ConnHash.keys | ForEach-Object {
@@ -147,4 +188,24 @@ $ConnHash.keys | ForEach-Object {
   #$ConnHash["${_}"]['SqlQueries'] = GetSqlQueriesByConnId($_)
 }
 #$ConnView
+#>
+
+
+
+
+if ($CALL -eq "var") {
+  PrintAllVar
+} else {
+  echo "[debug] print all conn"
+  PrintAllConnStr
+}
+
+<#
+  Example usage:
+  .\parse-conn-str.ps1 $FILEPATH.dtsx sql
+  .\parse-conn-str.ps1 $FILEPATH.dtsx sql "{$UUID}"
+  $(.\parse-conn-str.ps1 $FILEPATH.dtsx sql).SqlStatementSource
+  .\parse-conn-str.ps1 $FILEPATH.dtsx conn
+  .\parse-conn-str.ps1 $FILEPATH.dtsx var
+  .\parse-conn-str.ps1 $FILEPATH.dtsx var name
 #>
