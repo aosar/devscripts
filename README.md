@@ -1,2 +1,6 @@
-# Dev Scripts
-Scripts I use to speed up my workflow.
+# Dev Scripts and Docs
+Scripts to help workflow.
+
+Docs for reference and lookup. Setup, debugging, etc.
+
+Primarily Microsoft technologies.
