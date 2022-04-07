@@ -164,3 +164,24 @@ Extra details:
 - `$env:CLI_DEBUG=0` (PowerShell env)
 
 The log line `Active host changing from '(<id>)' to '(<id>)'` contains an ID in the first position when errors are thrown outside the context of the startup hook. The provider error does not occur if you swallow the error in a try catch block (you can still log the error, just dont throw it).
+
+
+**Error:**
+```
+Microsoft.Azure.WebJobs.Host.Indexers.FunctionIndexingException: Error indexing method 'getName'
+ ---> System.InvalidOperationException: Storage account connection string 'AzureWebJobsAzureWebJobsStorage' does not exist. Make sure that it is a defined App Setting.
+```
+
+**Solution:**
+This can happen if your `local.settings.json` has nested json objects within Values. It doesnt do **any** validation, and it can't read any of the values because it gets confused..
+
+**Error:**
+```
+[2022-04-05 10:10:18.553] [Error] -Host.Startup: Error indexing method 'getName'
+Microsoft.Azure.WebJobs.Host.Indexers.FunctionIndexingException: Error indexing method 'getName'
+ ---> System.InvalidOperationException: Storage account connection string for 'AzureWebJobsAzureWebJobsStorage' is invalid
+```
+This happened when I set `Files` which was deprecated in the newer versions of storage.
+
+Solution:
+TBA
