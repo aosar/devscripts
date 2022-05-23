@@ -30,6 +30,7 @@ Value cannot be null. (Parameter 'provider')
 
 This is an interesting one. Note the following statements may not be completely accurate. It is speculation based on my own trial and error and reading output logs, as Microsoft documentation and various forums didn't cover the particular issue I was having. 
 
+Theory 1:
 This can happen if you propogate errors in one of the startup hooks, and I think this happens because the storage host hasn't been initalized yet and it's not sure what to do with the logging. This is partially evidenced by the following logs (note the null host):
 ```
 [DEBUG] [Startup.Configure] Error: Serilog config file ./appsettings.json does not exist.
@@ -50,6 +51,30 @@ Extra details:
 - `$env:CLI_DEBUG=0` (PowerShell env)
 
 The log line `Active host changing from '(<id>)' to '(<id>)'` contains an ID in the first position when errors are thrown outside the context of the startup hook. The provider error does not occur if you swallow the error in a try catch block (you can still log the error, just dont throw it).
+
+Theory 2:
+This is purely a config initialization issue.
+
+This can be replicated by trying to use a key. The following code will repliate this:
+```
+var configProvider = builder.Services.BuildServiceProvider().GetService<IConfiguration>();
+IConfigurationRoot config = new ConfigurationBuilder()
+    .SetBasePath(Environment.CurrentDirectory)
+    .AddConfiguration(configProvider) // Add the original az function configuration 
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .Build();
+
+var splunk = config.GetSection("Splunk")
+```
+No trouble with these:
+```
+var uriPath = config.GetValue("Splunk", "fallback"); 
+var uriPath = config.GetValue("Splunk:UriPath", "fallback"); 
+```
+
+Note you probably have to actually use the variable or else the compiler probably optimizes such that it doesnt even try to calculate it. 
+
+
 
 
 **Error:**

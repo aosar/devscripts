@@ -13,7 +13,7 @@ For some reason .NET developers around the internet love to use libraries and wr
 `csproj` is similar to `package.json`, but more integrated with the code itself.
 
 ### Debugging
-View props in an object:
+#### View props in an object:
 ```
 foreach(object obj in initializedObject.AsEnumerable()) {
     Console.WriteLine($"{obj.ToString()}");
@@ -27,6 +27,41 @@ console.log(Object.keys(obj));
 obj.forEach(item => {console.log(`$[item]`)})
 ```
 Keep in mind you shouldnt have to do this if you use an actual debugger.
+
+#### Using json-like objects
+
+Define anonymous object:
+```
+var defaults = new {
+  host = "192.168.0.0",
+  message = "test message"
+};
+```
+- this cannot be used with const and/or class properties
+
+Parse json with newtonsoft lib:
+```
+string jsonData = JsonConvert.SerializeObject(defaults);
+```
+Log json:
+```
+// Full obj
+Console.WriteLine(jsonData);
+// Specific key
+Console.WriteLine((string)jsonObject["host"]);
+```
+
+Iterate:
+```
+public void LogObject (IEnumerable<dynamic> obj) {
+    foreach (dynamic item in obj) {
+        string host = item.host;
+    }
+}
+```
+
+## Using Configs
+tba
 
 ## Error handling
 So .net doesnt include stack traces by default, for whatever inane reason. So you have to try catch at the topmost part of your project if you want to log anything useful. However, that's not always possible if something else is executing your code, such as Azure.
@@ -61,9 +96,6 @@ try {
     throw e;
   }
 ```
-
-
-
 
 # Structure
 
